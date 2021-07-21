@@ -1,5 +1,6 @@
 class BirdsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found_response
+  validates :name, presence: true, uniqueness: true
 
   # GET /birds
   def index
@@ -10,7 +11,18 @@ class BirdsController < ApplicationController
   # POST /birds
   def create
     bird = Bird.create(bird_params)
-    render json: bird, status: :created
+    if bird.valid?
+      render json: bird, status: :created
+    else
+      render json: { errors: bird.errors }, status: :unprocessable_entity
+      #422 Unprocessable Entity response status code indicates that the server understands the content type of the request entity, and the syntax of the request entity is correct, but it was unable to process the contained instructions
+      #another way
+#       bird = Bird.create!(bird_params)
+#       render json: bird, status: :created
+#        rescue ActiveRecord::RecordInvalid => invalid
+#        render json: { errors: invalid.record.errors
+       # status: :unprocessable_entity
+    end
   end
 
   # GET /birds/:id
@@ -25,6 +37,15 @@ class BirdsController < ApplicationController
     bird.update(bird_params)
     render json: bird
   end
+  #ANOTHER WAY
+  # def update
+  #   bird = find_bird
+  #   bird.update!(bird_params)
+  #   render json: bird
+  #    rescue ActiveRecord::RecordInvalid => invalid
+  #   render json: { errors: invalid.record.errors },
+   # status: :unprocessable_entity
+  # end 
 
   # DELETE /birds/:id
   def destroy
